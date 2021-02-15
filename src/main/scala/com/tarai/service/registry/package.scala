@@ -56,7 +56,7 @@ package object registry {
   }
 
   final case class GetMicroservicesRequest(replyTo:        ActorRef[GetMicroservicesResponse]) extends Command
-  final case class GetMicroservicesResponse(microservices: Option[Seq[Microservice]] = None) extends Command
+  final case class GetMicroservicesResponse(microservices: Option[Seq[Microservice]] = None)
 
   object GetMicroservicesResponse {
     implicit val format: OFormat[GetMicroservicesResponse] = Json.format[GetMicroservicesResponse]
