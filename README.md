@@ -30,6 +30,7 @@ port 9000(normally should be exposed as a configuration).
 In order to test that application is working following curl operations can be performed :
 
 curl -H "Content-type: application/json" -X POST -d '[{ "name": "A", "entryPoint" : true, "replicas": 1, "dependencies": [ "B", "C" ], "healthy":true}, { "name": "B", "replicas": 1, "dependencies": [ "D" ], "healthy" : true}, { "name": "C", "replicas": 2, "dependencies": [ "D" ], "healthy":true},{ "name": "D", "replicas": 2, "healthy" : true}]' http://127.0.0.1:9000/microservices/deploy
+
 curl -X GET http://127.0.0.1:9000/microservices
 
 There are also unit tests available which cover all the necessary business logic.
