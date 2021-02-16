@@ -24,7 +24,7 @@ For the RESTFul implementation the choice was to use AkkaHttp with some Akka act
 
 The project can be packaged as docker container with the help of sbt-native-packager. Just execute docker:publishLocal as an example.
 
-Afterward it should be launched with the following command docker run -p 9000:9000 service-registry:0.1-SNAPSHOT since the application expects to be listening
+Afterwards it should be launched with the following command docker run -p 9000:9000 service-registry:0.1-SNAPSHOT since the application expects to be listening
 port 9000(normally should be exposed as a configuration). 
 
 In order to test that application is working following curl operations can be performed :
