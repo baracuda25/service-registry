@@ -5,7 +5,7 @@ A simple version of service registry which performs the validation of the deploy
 It's implemednted as RESTFul service which has two operations :
 
   - deploy new microservices
-  - get currentry running microservices
+  - get currently running microservices
 
 There is no real microservice deployment happening in the background, just intialization of the microservices objects which act as "successful" deployment.
 
