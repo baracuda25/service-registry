@@ -33,7 +33,7 @@ package object registry {
     implicit val format: OFormat[CyclicDescriptorError] = Json.format[CyclicDescriptorError]
   }
 
-  case class NotHealthyServiceDependencyError(dependencyPath: Option[String]) extends DeploymentError
+  case class NotHealthyServiceDependencyError(dependencyPath: String) extends DeploymentError
 
   object NotHealthyServiceDependencyError {
     implicit val format: OFormat[NotHealthyServiceDependencyError] = Json.format[NotHealthyServiceDependencyError]

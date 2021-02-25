@@ -97,7 +97,7 @@ class ServiceRegistryRoutesSpec extends AnyWordSpec with Matchers with ScalaFutu
         contentType should ===(ContentTypes.`application/json`)
 
         entityAs[DeploymentResponse] shouldBe
-          DeploymentResponse(None, Some(List(NotHealthyServiceDependencyError(Some("A~>B,B~>D")))))
+          DeploymentResponse(None, Some(List(NotHealthyServiceDependencyError("A~>B,B~>D"))))
       }
     }
 

@@ -3,7 +3,6 @@ lazy val akkaHttpVersion = "10.2.3"
 lazy val akkaVersion     = "2.6.12"
 lazy val playJsonVersion = "2.9.2"
 lazy val akkaHttpPlayJsonVersion = "1.35.3"
-lazy val scalaGraphVersion = "1.13.1"
 lazy val catsCoreVersion   = "2.1.1"
 
 lazy val root = (project in file(".")).
@@ -22,7 +21,6 @@ lazy val root = (project in file(".")).
         "com.typesafe.akka" %% "akka-stream"              % akkaVersion,
         "ch.qos.logback"    % "logback-classic"           % "1.2.3",
         "ch.qos.logback"    % "logback-core"              % "1.2.3",
-        "org.scala-graph"   %% "graph-core"               % scalaGraphVersion,
         "org.typelevel"     %% "cats-core"                % catsCoreVersion,
 
         "com.typesafe.akka" %% "akka-http-testkit"        % akkaHttpVersion % Test,
