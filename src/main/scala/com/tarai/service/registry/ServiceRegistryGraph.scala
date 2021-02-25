@@ -9,48 +9,50 @@ case class ServiceRegistryGraph(descriptors: Seq[MicroserviceDescriptor]) {
 
   private lazy val _descriptorsStateMap: Map[String, MicroserviceDescriptor] = descriptors.map(d => (d.name, d)).toMap
 
-  private lazy val _nodes: Seq[String] = descriptors
-    .flatMap(descriptor => descriptor.dependencies.toList.flatten :+ descriptor.name)
-    .distinct
-
-  private lazy val edges: Seq[(String, String)] = descriptors
+  private lazy val _edges: Seq[(String, String)] = descriptors
     .flatMap(descriptor => descriptor.dependencies.toList.flatten.map(dep => (dep, descriptor.name)))
 
-  private lazy val _inboundGraph: Map[String, Seq[String]] = edges
+  private lazy val _nodes: Seq[String] = edges.flatMap(_.swap.toList).distinct
+
+  private lazy val _outboundGraph: Map[String, Seq[String]] = edges
     .groupBy(_._1)
     .map(v => (v._1, v._2.map(_._2)))
 
-  private lazy val _outboundGraph: Map[String, Seq[String]] = edges
+  private lazy val _inboundGraph: Map[String, Seq[String]] = edges
     .groupBy(_._2)
     .map(v => (v._1, v._2.map(_._1)))
 
-  private lazy val _indegree: Map[String, Int] = _nodes.map((_, 0)).toMap ++ descriptors
-          .map(descriptor => (descriptor.name, descriptor.dependencies.toList.flatten.size))
-          .toMap
+  private lazy val _indegree: Map[String, Int] = _nodes.map((_, 0)).toMap ++ _inboundGraph.view.mapValues(_.size)
 
   private lazy val _cycle: Option[Seq[String]] = {
 
     object CycleFinder {
 
+      private val DISCOVERING = -1
+      private val DISCOVERED  = 1
+
       def unapply(node: String): Option[Seq[String]] = findCycle(node, mutable.HashMap[String, Int](), List(node))
 
-      private def findCycle(serviceName: String, v: mutable.Map[String, Int], path: Seq[String] = Nil): Option[Seq[String]] = {
-        if (v.get(serviceName).contains(-1)) return Some(path)
-        else if (v.get(serviceName).contains(1)) return None
-        else {
-          v.update(serviceName, -1)
-          for (j <- _inboundGraph.getOrElse(serviceName, List[String]())) {
-            val maybeCycle = findCycle(j, v, path :+ j)
-            if (maybeCycle.isDefined) return maybeCycle
+      private def findCycle(serviceName: String, v: mutable.Map[String, Int], path: Seq[String] = Nil): Option[Seq[String]] =
+        v.get(serviceName)
+          .collect {
+            case DISCOVERING => Some(path)
+            case DISCOVERED  => None
           }
-          v.update(serviceName, 1)
-        }
-        None
-      }
+          .flatten
+          .orElse {
+            v.update(serviceName, DISCOVERING)
+            val maybeCycle = _outboundGraph
+              .getOrElse(serviceName, Nil)
+              .toList
+              .collectFirstSome(child => findCycle(child, v, path :+ child))
+            v.update(serviceName, DISCOVERED)
+            maybeCycle
+          }
     }
 
     _nodes.collectFirst {
-      case CycleFinder(path) => path.zip(path.tail).map(t => t._1 + "~>" + t._2)
+      case CycleFinder(path) => stringifyPath(path)
     }
 
   }
@@ -77,25 +79,24 @@ case class ServiceRegistryGraph(descriptors: Seq[MicroserviceDescriptor]) {
     )
 
   private def findPredecessorPath(serviceName: String, predicate: String => Boolean): Option[Seq[String]] = {
-    def findPredecessor(serviceName: String, path: Seq[String] = Nil): Option[Seq[String]] = {
-      if (predicate(serviceName)) return Some(path)
+    def findPredecessor(serviceName: String, path: Seq[String] = Nil): Option[Seq[String]] =
+      if (predicate(serviceName)) Some(path)
       else {
-        for (j <- _outboundGraph.getOrElse(serviceName, List[String]())) {
-          val maybePath = findPredecessor(j, path :+ j)
-          if (maybePath.isDefined) return maybePath
-        }
+        _inboundGraph
+          .getOrElse(serviceName, Nil)
+          .toList
+          .collectFirstSome(child => findPredecessor(child, path :+ child))
       }
-      None
-    }
-    val option = findPredecessor(serviceName, List(serviceName))
-    option.map(path => path.zip(path.tail).map(t => t._1 + "~>" + t._2))
+    findPredecessor(serviceName, List(serviceName)).map(stringifyPath)
   }
+
+  private def stringifyPath(path: Seq[String]) = path.zip(path.tail).map(t => s"${t._1}~>${t._2}")
 
   private lazy val _topologicalSorting: List[String] = {
 
     val indegree: mutable.Map[String, Int] = mutable.Map(_indegree.toSeq: _*)
 
-    val graph: mutable.Map[String, Seq[String]] = mutable.Map(_inboundGraph.toSeq: _*)
+    val graph: mutable.Map[String, Seq[String]] = mutable.Map(_outboundGraph.toSeq: _*)
 
     val queue = mutable.Queue[String](indegree.filter(_._2 == 0).keys.toSeq: _*)
 
