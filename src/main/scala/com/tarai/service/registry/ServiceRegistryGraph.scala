@@ -9,18 +9,16 @@ case class ServiceRegistryGraph(descriptors: Seq[MicroserviceDescriptor]) {
 
   private lazy val _descriptorsStateMap: Map[String, MicroserviceDescriptor] = descriptors.map(d => (d.name, d)).toMap
 
-  private lazy val _edges: Seq[(String, String)] = descriptors
+  private lazy val _outboundEdges: Seq[(String, String)] = descriptors
     .flatMap(descriptor => descriptor.dependencies.toList.flatten.map(dep => (dep, descriptor.name)))
 
-  private lazy val _nodes: Seq[String] = _edges.flatMap(_.swap.toList).distinct
+  private lazy val _inboundEdges: Seq[(String, String)] = _outboundEdges.map(_.swap)
 
-  private lazy val _outboundGraph: Map[String, Seq[String]] = _edges
-    .groupBy(_._1)
-    .map(v => (v._1, v._2.map(_._2)))
+  private lazy val _nodes: Seq[String] = _inboundEdges.flatMap(_.toList).distinct
 
-  private lazy val _inboundGraph: Map[String, Seq[String]] = _edges
-    .groupBy(_._2)
-    .map(v => (v._1, v._2.map(_._1)))
+  private lazy val _outboundGraph: Map[String, Seq[String]] = graph(_outboundEdges)
+
+  private lazy val _inboundGraph: Map[String, Seq[String]] = graph(_inboundEdges)
 
   private lazy val _indegree: Map[String, Int] = _nodes.map((_, 0)).toMap ++ _inboundGraph.view.mapValues(_.size)
 
@@ -77,6 +75,11 @@ case class ServiceRegistryGraph(descriptors: Seq[MicroserviceDescriptor]) {
               )
           )
     )
+
+  private def graph(edges: Seq[(String, String)]) =
+    edges
+      .groupBy(_._1)
+      .map(v => (v._1, v._2.map(_._2)))
 
   private def findPredecessorPath(serviceName: String, predicate: String => Boolean): Option[Seq[String]] = {
     def findPredecessor(serviceName: String, path: Seq[String] = Nil): Option[Seq[String]] =
