@@ -12,13 +12,13 @@ case class ServiceRegistryGraph(descriptors: Seq[MicroserviceDescriptor]) {
   private lazy val _edges: Seq[(String, String)] = descriptors
     .flatMap(descriptor => descriptor.dependencies.toList.flatten.map(dep => (dep, descriptor.name)))
 
-  private lazy val _nodes: Seq[String] = edges.flatMap(_.swap.toList).distinct
+  private lazy val _nodes: Seq[String] = _edges.flatMap(_.swap.toList).distinct
 
-  private lazy val _outboundGraph: Map[String, Seq[String]] = edges
+  private lazy val _outboundGraph: Map[String, Seq[String]] = _edges
     .groupBy(_._1)
     .map(v => (v._1, v._2.map(_._2)))
 
-  private lazy val _inboundGraph: Map[String, Seq[String]] = edges
+  private lazy val _inboundGraph: Map[String, Seq[String]] = _edges
     .groupBy(_._2)
     .map(v => (v._1, v._2.map(_._1)))
 
